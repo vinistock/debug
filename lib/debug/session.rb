@@ -1743,11 +1743,15 @@ module DEBUGGER__
         end.each do |_key, bp|
           if !bp.iseq
             bp.try_activate iseq
-          elsif reloaded
+          elsif reloaded && (iseq.first_lineno..iseq.last_line).cover?(bp.line)
             @bps.delete bp.key # to allow duplicate
-            if nbp = LineBreakpoint.copy(bp, iseq)
-              add_bp nbp
-            end
+
+            # We have to delete the breakpoint we're copying or else its TracePoint even may continue to be enabled and
+            # we accidentally stop at deleted breakpoints
+            bp.delete
+
+            nbp = LineBreakpoint.copy(bp, iseq)
+            add_bp nbp
           end
         end
       else # !file_path => file_path is not existing

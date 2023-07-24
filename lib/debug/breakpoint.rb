@@ -162,6 +162,11 @@ module DEBUGGER__
     def setup
       return unless @type
 
+      # If this breakpoint was activated before, then `@tp` might be pointing to a different TracePoint instance. If we
+      # don't disable it before creating a new one, we end up with enabled TracePoint events that aren't associated to
+      # any breakpoints, which leads to the code stopping in places where a breakpoint was previosuly deleted
+      disable
+
       @tp = TracePoint.new(@type) do |tp|
         if @cond
           next unless safe_eval tp.binding, @cond
